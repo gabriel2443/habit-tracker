@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using Microsoft.VisualBasic.FileIO;
 
 class Program
 {
@@ -73,12 +74,12 @@ class Program
                 case "2":
                     Insert();
                     break;
-            /*    case "3":
+                case "3":
                     Delete();
                     break;
                 case "4":
                     Update();
-                    break;*/
+                    break;
                 default:
                     Console.WriteLine("\nInvalid Command. Please type a number from 0 to 4.\n");
                     break;
@@ -153,7 +154,7 @@ class Program
     {
         string date = GetDateInput();
 
-        int quantity = GetQuantity();
+        int quantity = GetNumberInput("Please enter the date in Format:( dd-mm-yy) and the number of glases you drinked");
 
         using(var connection = new SqliteConnection(connectionString))
         {
@@ -169,10 +170,78 @@ class Program
 
         }
 
+        Console.Clear();
+        Menu();
 
 
 
     }
+
+    private static void Update()
+    {
+        GetAllRecords();
+        var id = GetNumberInput("Please select the id you want to Update");
+        var date = GetDateInput();
+        var quantity = GetNumberInput("Please type the amount of drinking glasses you want to update");
+
+        using (var connection = new SqliteConnection(connectionString))
+        {
+            connection.Open();
+
+            var checkCmd = connection.CreateCommand();
+            checkCmd.CommandText = $"SELECT EXISTS(SELECT 1 FROM drinking_water WHERE Id={id})";
+            int checkQuery = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+            if(checkQuery == 0)
+            {
+                Console.WriteLine($"\n Record with Id{id} does not exist");
+                connection.Close();
+                Update();
+            }
+
+
+            var tableCmd = connection.CreateCommand();
+            tableCmd.CommandText = $"UPDATE drinking_water SET Date = {date}, Quantity={quantity} WHERE Id={id}";
+            tableCmd.ExecuteNonQuery ();
+            connection.Close();
+        }
+
+
+
+
+    }
+
+
+
+
+    private static void Delete()
+    {
+
+        GetAllRecords();
+        Console.WriteLine("Please select a number to delete the row\n");
+
+        var id = GetNumberInput("Please type the Id you want deleted from the record");
+
+
+        using (var connection = new SqliteConnection(connectionString))
+        {
+            connection.Open();
+
+            var tableCmd = connection.CreateCommand();
+
+            tableCmd.CommandText = $"DELETE FROM drinking_water WHERE Id = {id} ";
+
+            tableCmd.ExecuteNonQuery();
+            connection.Close();
+
+        }
+        Console.Clear();
+        Menu();
+
+
+    }
+
+
 
     internal static string GetDateInput()
     {
@@ -183,20 +252,36 @@ class Program
 
         if (dateInput == "0") Menu();
 
+        while (!DateTime.TryParseExact(dateInput, "dd-mm-yy", new CultureInfo("en-US"), DateTimeStyles.None, out _)){
+
+            Console.WriteLine("\nInvalid date format, type 0 to return to main menu or try again");
+
+            dateInput = Console.ReadLine(); 
+        }
+
+
         return dateInput;
     }
 
 
 
-    internal static int GetQuantity()
+    internal static int GetNumberInput(string message)
     {
-        Console.WriteLine("Please type the amount of glasses drinked or type 0 to return to main menu");
+        Console.WriteLine(message);
 
-        var quantityInput = Console.ReadLine();
+        var numInput = Console.ReadLine();
 
-        if(quantityInput == "0") Menu();
+        if(numInput == "0") Menu();
 
-        int finalInput = Convert.ToInt32(quantityInput);
+       while(!Int32.TryParse(numInput, out _) || Convert.ToInt32(numInput) < 0)
+        {
+            Console.WriteLine("Please enter a valid Number");
+           numInput = Console.ReadLine();   
+
+
+        }
+
+        var finalInput = Convert.ToInt32(numInput);
 
         return finalInput;
 
