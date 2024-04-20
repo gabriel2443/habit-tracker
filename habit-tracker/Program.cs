@@ -78,7 +78,6 @@ internal class Program
     private static void GetAllRecords()
     {
         Console.Clear();
-
         using (var connection = new SqliteConnection(connectionString))
         {
             connection.Open();
@@ -123,7 +122,7 @@ internal class Program
     {
         string date = GetDateInput();
 
-        int quantity = GetNumberInput("Please enter the date in Format:( dd-mm-yy) and the number of glases you drinked");
+        int quantity = GetNumberInput("Please enter the number of glases you drinked");
 
         using (var connection = new SqliteConnection(connectionString))
         {
@@ -145,8 +144,6 @@ internal class Program
     {
         GetAllRecords();
         var id = GetNumberInput("Please select the id you want to Update");
-        var date = GetDateInput();
-        var quantity = GetNumberInput("Please type the amount of drinking glasses you want to update");
 
         using (var connection = new SqliteConnection(connectionString))
         {
@@ -163,11 +160,15 @@ internal class Program
                 Update();
             }
 
+            var date = GetDateInput();
+            var quantity = GetNumberInput("Please type the amount of drinking glasses you want to update");
+
             var tableCmd = connection.CreateCommand();
-            tableCmd.CommandText = $"UPDATE drinking_water SET Date = {date}, Quantity={quantity} WHERE Id={id}";
+            tableCmd.CommandText = $"UPDATE drinking_water SET Date = '{date}', Quantity={quantity} WHERE Id={id}";
             tableCmd.ExecuteNonQuery();
             connection.Close();
         }
+        Menu();
     }
 
     private static void Delete()
@@ -183,12 +184,15 @@ internal class Program
 
             var tableCmd = connection.CreateCommand();
 
-            tableCmd.CommandText = $"DELETE FROM drinking_water WHERE Id = {id} ";
+            tableCmd.CommandText = $"DELETE from drinking_water WHERE Id = '{id}'";
 
-            tableCmd.ExecuteNonQuery();
-            connection.Close();
+            int rowCount = tableCmd.ExecuteNonQuery();
+            if (rowCount == 0)
+            {
+                Console.WriteLine($"\n\nRecord with Id {id} doesn't exist. \n\n");
+                Delete();
+            }
         }
-        Console.Clear();
         Menu();
     }
 
